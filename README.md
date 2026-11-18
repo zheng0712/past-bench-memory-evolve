@@ -67,9 +67,9 @@ make table                    # 出实验表
 
 ## 当前状态
 
-- [ ] 数据集剖析与 dataset card
+- [x] 数据集剖析与 dataset card
 - [ ] Hermes 容器接入
-- [ ] SM01 小批量冒烟
+- [x] SM01 小批量冒烟
 - [ ] SM01 全量基线
-- [ ] SM03 小批量冒烟
+- [x] SM03 小批量冒烟
 - [ ] SM03 全量基线
