@@ -15,6 +15,9 @@ from typing import Any
 
 VARIANTS = ("with_persistence", "without_persistence")
 TIMEOUT_WALL_S = 200.0
+# 只有 learn / evaluation 阶段参与"分数-通过"与 judge 一致性判定；
+# baseline、control、reflection 按设计就是非通过态或诊断态。
+MEASURED_BUCKETS = {"learn", "evaluation"}
 
 
 def load_comparison(run_dir: Path) -> dict[str, Any]:
@@ -115,15 +118,16 @@ def classify(rows: list[dict]) -> list[dict]:
         error = "none"
         wall = row["wall_s"] or 0
         judge = row["judge_score"] or 0
+        measured = row["bucket"] in MEASURED_BUCKETS
         if row["infra_blocked"]:
             error = "infra_blocked"
         elif wall > TIMEOUT_WALL_S:
             error = "timeout"
-        elif row["task_score"] is not None and row["task_score"] >= 0.7 and not row["passed"]:
+        elif measured and row["task_score"] is not None and row["task_score"] >= 0.7 and not row["passed"]:
             error = "pass_score_mismatch"
-        elif (judge >= 0.7 and not row["hard_pass"]) or (judge < 0.5 and row["hard_pass"]):
+        elif measured and ((judge >= 0.7 and not row["hard_pass"]) or (judge < 0.5 and row["hard_pass"])):
             error = "judge_mismatch"
-        elif row["variant"] == "without_persistence" and row["bucket"] != "baseline":
+        elif measured and row["variant"] == "without_persistence":
             base = cold_memory.get((row["run"], row["family"]), 0)
             if (row["memory_chars"] or 0) != base:
                 error = "persistence_anomaly"
@@ -203,7 +207,7 @@ def main() -> int:
                 "episodes": w.get("episodes") or o.get("episodes"),
                 "with_eval": w.get("eval_score"),
                 "without_eval": o.get("eval_score"),
-                "delta": w.get("delta_score"),
+                "delta": (w.get("eval_score") or 0) - (o.get("eval_score") or 0),
                 "with_pass": w.get("eval_pass_rate"),
                 "without_pass": o.get("eval_pass_rate"),
                 "pass_delta": (w.get("eval_pass_rate") or 0) - (o.get("eval_pass_rate") or 0),
@@ -276,10 +280,12 @@ def main() -> int:
         "infra_blocked", "timeout", "pass_score_mismatch",
         "judge_mismatch", "persistence_anomaly", "none",
     ]
+    eligible = [row for row in classified if row["task_score"] is not None]
+    excluded = len(classified) - len(eligible)
     counts = {key: [] for key in order}
-    for row in classified:
+    for row in eligible:
         counts[row["error_type"]].append(row)
-    total = len(classified)
+    total = len(eligible)
 
     t3_rows = [
         {
@@ -296,7 +302,7 @@ def main() -> int:
     lines = [
         "# 失败分类与比例 t3",
         "",
-        f"分母：{total} 条 episode（with/without 合计）。每条只记一个主类别，优先级：infra > timeout > pass_score_mismatch > judge_mismatch > persistence_anomaly。",
+        f"分母：{total} 条有评分的 episode（with/without 合计）；另有 {excluded} 条 reflection 等无评分记录不参与比例。每条只记一个主类别，优先级：infra > timeout > pass_score_mismatch > judge_mismatch > persistence_anomaly。",
         "",
         "| error_type | 条数 | 占比 | 典型案例 |",
         "|---|---:|---:|---|",
