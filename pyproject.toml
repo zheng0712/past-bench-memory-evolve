@@ -1,0 +1,15 @@
+[project]
+name = "pbme"
+version = "0.1.0"
+description = "PAST-Bench memory self-evolution baseline harness"
+requires-python = ">=3.10"
+dependencies = []
+
+# TODO: 接入 PAST-Bench 后补齐依赖（pandas / pyyaml / openai 等）
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

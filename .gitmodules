@@ -1,0 +1,3 @@
+[submodule "benchmarks/PAST-Bench"]
+	path = benchmarks/PAST-Bench
+	url = https://github.com/Gen-Verse/PAST-Bench

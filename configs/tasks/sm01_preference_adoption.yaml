@@ -1,0 +1,11 @@
+# SM01 偏好采纳（memory_ability）
+task: SM01_preference_adoption
+benchmark: PAST-Bench
+dataset_root: benchmarks/PAST-Bench/self-evolve-tasks-v2/memory_ability/SM01_preference_adoption
+family: family.yaml
+splits:
+  learn: [learn_a_tsv_preference, learn_b_preference]
+  eval: [eval_near_apply_same, eval_far_transfer]
+  control: [cold_style_baseline, control_no_persist, control_shortcut]
+metrics: []      # TODO: 按 dataset card 补齐
+smoke_size: 30

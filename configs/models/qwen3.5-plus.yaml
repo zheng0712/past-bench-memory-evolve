@@ -1,0 +1,7 @@
+# 统一模型配置
+provider: dashscope
+model: qwen3.5-plus
+coder_model: qwen3-coder-plus
+temperature: 0.0
+max_tokens: 4096
+timeout_s: 120
