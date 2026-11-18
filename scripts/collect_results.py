@@ -280,7 +280,7 @@ def main() -> int:
         "infra_blocked", "timeout", "pass_score_mismatch",
         "judge_mismatch", "persistence_anomaly", "none",
     ]
-    eligible = [row for row in classified if row["task_score"] is not None]
+    eligible = [row for row in classified if row["bucket"] != "reflection" and row["task_score"] is not None]
     excluded = len(classified) - len(eligible)
     counts = {key: [] for key in order}
     for row in eligible:
