@@ -243,7 +243,7 @@ def main() -> int:
         )
     lines += [
         "",
-        "说明：`delta` 取 `sequence_comparison.json` 的 `evaluation_avg_task_score` 之差；`pass` 由确定性组件决定，不是 judge 分数。",
+        "说明：`delta` 取 `sequence_comparison.json` 的 `evaluation_avg_task_score` 之差；`pass` 由确定性组件决定，不是 judge 分数。`episodes` 为运行期实际数，可能多于 `family.yaml` 的 `total_episodes`（如 reflection 阶段）。",
         "",
     ]
     (out_dir / "t1_baseline.md").write_text("\n".join(lines), encoding="utf-8")
@@ -259,7 +259,7 @@ def main() -> int:
     lines = [
         "# 逐 episode 结果 t2",
         "",
-        f"共 {len(classified)} 行（with/without 两个变体分别计数）。",
+        f"共 {len(classified)} 行（with/without 两个变体分别计数，含 reflection 等无评分阶段）。",
         "",
         "| run | variant | task_id | bucket | score | passed | hard | judge | content | turns | wall_s | tokens |",
         "|---|---|---|---|---:|---|---|---:|---:|---:|---:|---:|",
