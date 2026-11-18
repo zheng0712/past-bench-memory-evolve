@@ -59,6 +59,10 @@ if [[ ! -x "$PAST_BENCH" ]]; then
   echo "找不到 $PAST_BENCH，请先安装 benchmarks/PAST-Bench 依赖" >&2
   exit 2
 fi
+if [[ ! -f "$BENCH_ROOT/self-evolve-tasks-v2/$FAMILY/family.yaml" ]]; then
+  echo "family 不存在: $BENCH_ROOT/self-evolve-tasks-v2/$FAMILY/family.yaml" >&2
+  exit 2
+fi
 
 TRACE_DIR="${TRACE_DIR:-$REPO_ROOT/experiments/$RUN_ID}"
 mkdir -p "$TRACE_DIR"
