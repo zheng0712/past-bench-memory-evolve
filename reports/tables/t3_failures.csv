@@ -1,0 +1,7 @@
+error_type,count,denominator,pct,examples
+infra_blocked,0,30,0.0%,-
+timeout,2,30,6.7%,SM03_COLD_001; SM03_EVAL_FAR_001
+pass_score_mismatch,3,30,10.0%,SM01_LEARN_A_001; SM01_LEARN_B_001; SM03_EVAL_NEAR_001
+judge_mismatch,3,30,10.0%,SM01_LEARN_A_001; SM01_EVAL_FAR_001; SM03_UPDATE_001
+persistence_anomaly,0,30,0.0%,-
+none,22,30,73.3%,SM01_COLD_001; SM01_EVAL_NEAR_001; SM01_EVAL_FAR_001

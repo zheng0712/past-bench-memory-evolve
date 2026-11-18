@@ -1,3 +1,3 @@
-family,episodes,with_eval_score,without_eval_score,delta_score,with_pass_rate,without_pass_rate,with_mechanism,without_mechanism,with_evolve,without_evolve,infra_blocks
-SM01_preference_adoption,8,1.0,0.4,0.6,1.0,0.0,0.966667,0.4,0.386667,0.0,0
-SM03_fact_correction,7,1.0,0.704,0.296,1.0,0.0,0.866667,0.566667,0.346667,0.058933,0
+run,family,episodes,with_eval,without_eval,delta,with_pass,without_pass,pass_delta,with_mech,without_mech,with_evolve,without_evolve,infra_blocks
+20261118_sm01_hermes_smoke,SM01_preference_adoption,9,1.0,0.4,0.6,1.0,0.0,1.0,0.966667,0.4,0.386667,0.0,0
+20261118_sm03_hermes_smoke,SM03_fact_correction,7,1.0,0.704,0.29600000000000004,1.0,0.0,1.0,0.866667,0.566667,0.346667,0.058933,0
