@@ -4,26 +4,25 @@
 
 | 项 | 值 |
 |---|---|
-| 任务 |  |
-| Agent |  |
-| 模型 |  |
-| 规模 | smoke / full |
-| 样本数 |  |
+| family |  |
+| agent / profile | hermes / qwen |
+| judge | qwen3.5-plus |
+| 命令 | 见 `cmd.txt` |
 
-## 2. 结果
+## 2. 有效性
 
-| 指标 | 值 |
-|---|---|
-| 通过率 |  |
-| 平均轮次 |  |
-| 平均耗时 |  |
+| 变体 | 空响应 | infra | 403 | 结论 |
+|---|---:|---:|---|---|
+| with_persistence |  |  |  |  |
+| without_persistence |  |  |  |  |
 
-## 3. 失败类型分布
+## 3. family 指标
 
-| error_type | 条数 | 占比 | 典型案例 |
-|---|---|---|---|
-|  |  |  |  |
+| 变体 | baseline | eval | eval pass | delta | mechanism | evolve |
+|---|---:|---:|---:|---:|---:|---:|
+| with_persistence |  |  |  |  |  |  |
+| without_persistence |  |  |  |  |  |  |
 
-## 4. 结论与下一步
+## 4. 问题
 
-TODO
+统一记录到 `reports/experiment-report.md` §2「问题台账」，这里只写本次 run 的补充说明。

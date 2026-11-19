@@ -1,75 +1,97 @@
 # past-bench-memory-evolve
 
-PAST-Bench 上「Agent 运行时记忆自进化」的基线实验工程（当前为骨架）。
+在 **PAST-Bench** 上跑「Agent 运行时记忆自进化」基线：固定 **Hermes + qwen3.5-plus**，比较持久化开启（with）与关闭（without）的差异。
 
-- 基准：PAST-Bench（git submodule，位于 `benchmarks/PAST-Bench`，只读）
-- Agent：Hermes full setup（WSL2 + Docker）
-- 模型：qwen3.5-plus（主）/ qwen3-coder-plus（代码类任务）
-- 任务：SM01_preference_adoption、SM03_fact_correction
+当前覆盖两个 family：
 
-## 目录结构
+- `SM01_preference_adoption`（memory_ability）
+- `SM03_fact_correction`（update_ability）
+
+完整实验报告见 **[reports/experiment-report.md](reports/experiment-report.md)**。
+
+## 结果速览
+
+只统计有效 run（with/without 都无空响应、无 infra、无 403）。每个 family 3 个有效 run。
+
+| family | with eval | without eval | Δ（with − without） | with pass |
+|---|---:|---:|---:|---:|
+| SM01_preference_adoption | 0.852 ± 0.148 | 0.400 | 0.452 ± 0.148 | 50% |
+| SM03_fact_correction | 1.000 ± 0.000 | 0.704 | 0.296 ± 0.000 | 100% |
+
+两点说明：
+
+- judge 目前与 agent 同为 `qwen3.5-plus`；`judge_score` 只写入 `communication`，不进入 `task_score`，也不与论文 judge 对比。
+- SM03 run2 的 without 变体、run3 的两个变体有空响应（run3 伴随 403），已作为无效 run 剔除；原始数据在报告 §4。
+
+## 目录
 
 ```text
 .
-├── benchmarks/PAST-Bench/     # submodule，锁定 commit，不修改
-├── configs/                   # 模型 / agent / 任务配置
-├── docs/                      # 数据集卡片、实验协议、Hermes 接入说明
-├── experiments/               # 一次运行一个目录
-│   └── _template/
-├── prompts/                   # judge / 任务包装提示词（带版本号）
-├── reports/                   # 汇总表格与图
-├── scripts/                   # 只做编排，逻辑放 src/pbme
-└── src/pbme/                  # dataset / adapters / runner / judge / analysis
+├── benchmarks/PAST-Bench/   # submodule，只读
+├── configs/agents.yaml      # agent registry（含 qwen profile）
+├── config.yaml              # judge 配置
+├── scripts/
+│   ├── run_baseline.sh      # 跑一个 family 的 paired run
+│   ├── collect_results.py   # 生成 t1–t4
+│   └── profile_dataset.py   # 生成数据集画像 t0
+├── experiments/<run>/       # 每次运行一个目录
+├── reports/                 # 实验报告与表格
+└── docs/                    # dataset card / Hermes 接入 / 实验协议
 ```
 
-## 快速开始
+## 跑一次实验
+
+前置：WSL2 + Docker、`benchmarks/PAST-Bench` 已装好 Python 环境、`past-bench-agent:latest` 镜像已构建。详见 [docs/02-hermes-setup.md](docs/02-hermes-setup.md)。
 
 ```bash
-git clone --recursive <repo-url>
-cp .env.example .env          # 填入 Qwen Key 与 WSL 内路径
-make env-check                # 环境自检
-make profile                  # 数据集剖析 -> reports/tables
-make smoke                    # 生成小批量样本清单
-make run                      # 跑基线
-make collect                  # 汇总 results.jsonl
-make table                    # 出实验表
+cd ~/work/pbme
+export QWEN_API_KEY=...
+
+# 跑一个 family（会同时跑 with / without）
+bash scripts/run_baseline.sh \
+  --family memory_ability/SM01_preference_adoption \
+  --run-id 20261119_sm01_run4
+
+# 汇总多个 run
+python scripts/collect_results.py \
+  --runs experiments/20261118_sm01_hermes_smoke \
+         experiments/20261119_sm01_run2 \
+         experiments/20261119_sm01_run3 \
+  --out reports/tables
 ```
 
-## 实验目录约定
+每次 run 产出：
 
-`experiments/YYYYMMDD_<task>_<agent>_<scale>/`，例如 `20261118_sm01_hermes_smoke30/`。
+```text
+experiments/<run>/
+├── cmd.txt                     # 本次运行的完整命令
+├── with_persistence/
+│   ├── sequence_results.json   # 逐 episode 原始结果
+│   ├── sequence_summary.json   # family 指标
+│   └── ...
+├── without_persistence/
+└── shared_cold/                # SM01 的共享 cold baseline
+```
 
-每次运行固定四件套：
+## 怎么看结果
 
-| 文件 | 内容 |
-|---|---|
-| `config.yaml` | 本次运行的完整配置快照（含样本清单哈希） |
-| `results.jsonl` | 逐条结果 |
-| `errors/` | 失败样本原始日志 |
-| `report.md` | 失败类型分布与比例、结论 |
+1. **主报告**：`reports/experiment-report.md`
+   - §1 有效实验表
+   - §2 问题台账（所有问题统一记录）
+   - §3 按原始评分要求的分析
+   - §4 全部原始数据（含无效 run）
+2. **表格**：`reports/tables/t0_dataset_profile.*`、`t1_baseline.*`、`t2_episodes.*`、`t3_failures.*`、`t4_stability.*`
+3. **单次运行**：`experiments/<run>/with_persistence/sequence_results.json`
 
-## results.jsonl 字段
+## 已知问题
 
-| 字段 | 说明 |
-|---|---|
-| `run_id` | 运行标识 |
-| `task_id` | 数据集内任务 ID |
-| `split` | learn / eval_near / eval_far / control |
-| `agent` | hermes_full / pi / no_memory |
-| `model` | 模型名 |
-| `turn` | 轮次 |
-| `metric` | 指标名 |
-| `score` | 得分 |
-| `passed` | 是否通过 |
-| `error_type` | 失败分类，见 docs/03-experiment-protocol.md |
-| `latency_ms` | 耗时 |
-| `input_tokens` / `output_tokens` | token 消耗 |
+- **SM01 最终回复没有 TSV**：39/48 条非空记录（81.3%），其中 6 条只差 TSV；见报告 §2 `ISS-01`。
+- **SM03 403/空响应**：run2 without 5/7、run3 14/14；已从有效表剔除，原始证据在报告 §4.5。
+- **judge 与被测 agent 同模型**：judge 值只作辅助参考；下一步换独立 judge 并做校准。
+- **慢 episode**：`wall_time_s>200s` 只标注，不当作失败；报告 §4.6。
 
-## 当前状态
+## 下一步
 
-- [x] 数据集剖析与 dataset card
-- [ ] Hermes 容器接入
-- [x] SM01 小批量冒烟
-- [ ] SM01 全量基线
-- [x] SM03 小批量冒烟
-- [ ] SM03 全量基线
+1. 换独立 judge（论文用 MiniMax-M2.7），做 12 条校准，重判已有 trace。
+2. 扩大 family 与 run 数，统计大规模问题比例。
+3. 如需改上游 prompt/grader（SM01 TSV 表述），先单独开分支，避免影响与官方基线的可比性。

@@ -1,11 +1,11 @@
 [project]
 name = "pbme"
 version = "0.1.0"
-description = "PAST-Bench memory self-evolution baseline harness"
+description = "PAST-Bench memory self-evolution experiment harness"
 requires-python = ">=3.10"
-dependencies = []
 
-# TODO: 接入 PAST-Bench 后补齐依赖（pandas / pyyaml / openai 等）
+# 运行依赖由 benchmarks/PAST-Bench/.venv 提供（past-bench、pyyaml、openai 等）。
+dependencies = []
 
 [build-system]
 requires = ["setuptools>=68"]

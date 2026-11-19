@@ -1,25 +1,55 @@
-# Hermes 接入说明（WSL2 + Docker full setup）
+# Hermes 接入说明
 
-## 1. 运行位置
+## 1. 用的是哪个 Hermes
 
-- Hermes 安装在 WSL2 内，通过 Docker 运行 full setup。
-- 本仓库在 Windows 工作区，WSL 内通过 `/mnt/c/...` 访问；跑实验时建议在 WSL 内 clone 一份，避免跨文件系统 I/O 影响。
+PAST-Bench 的 self-evolve v2 使用仓库自带的 **`agents/hermes-agent`（pip 包）**，通过 `--runtime local` 直接调用。
 
-## 2. 调用方式
+它**不使用**用户自己的 Hermes full setup / Docker 容器。Docker 只用于 `--sandbox` 的工具沙箱（shell / file / browser），镜像为 `past-bench-agent:latest`。
 
-TODO：补充实际命令（容器名、挂载目录、环境变量、结果回读路径）。
+## 2. 首次准备（WSL2）
 
 ```bash
-# 示例占位，按实际环境修改
-docker exec -it hermes bash
+cd ~/work/pbme/benchmarks/PAST-Bench
+
+# 1) Python 3.11+ 虚拟环境
+python3.11 -m venv .venv
+source .venv/bin/activate
+
+# 2) 安装 PAST-Bench 与自带 Hermes
+pip install -e .
+pip install -e agents/hermes-agent
+
+# 3) 构建 sandbox 工具镜像
+past-bench build-image --kind sandbox
+
+# 如果 Docker Hub 不通，用镜像加速：
+# docker build --build-arg REGISTRY=docker.m.daocloud.io \
+#   -t past-bench-agent:latest -f Dockerfile.agent .
 ```
 
-## 3. 与 runner 的约定
+## 3. 运行
 
-- 输入：任务目录 + 模型配置 + 运行目录
-- 输出：`results.jsonl`、原始日志到 `experiments/<run>/logs/`
-- 失败必须落 `error_type`，禁止静默跳过
+```bash
+export QWEN_API_KEY=...
+cd ~/work/pbme
 
-## 4. 已知问题
+bash scripts/run_baseline.sh \
+  --family memory_ability/SM01_preference_adoption \
+  --run-id 20261119_sm01_run4
+```
 
-TODO：小批量冒烟时逐条记录。
+`run_baseline.sh` 会固定：
+
+```text
+--runtime local --sandbox --sandbox-tools --compare-no-persistence
+--registry <repo>/configs/agents.yaml
+--config <repo>/config.yaml
+--trace-dir <repo>/experiments/<run-id>
+```
+
+## 4. 常见问题
+
+- **必须在 `benchmarks/PAST-Bench` 目录下启动**，否则 bootstrap 找不到 `agents/hermes-agent`。
+- **不要用 `--runtime container`**：self-evolve 序列只支持 `--runtime local`；Docker 只作为 sandbox。
+- **403 `AccessDenied.Unpurchased`**：中转站账号/渠道没有该模型权限，不是 max_tokens；先单请求探测，再重跑。
+- **judge 与 agent 同模型**：当前 `config.yaml` 的 judge 是 `qwen3.5-plus`；judge 值只作辅助参考，换独立 judge 见 `reports/experiment-report.md` §2 `ISS-12`。

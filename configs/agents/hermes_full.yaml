@@ -1,8 +1,0 @@
-# Hermes full setup（WSL2 + Docker）
-agent: hermes_full
-setup: full
-runtime: wsl2-docker
-hermes_home: ${HERMES_HOME}
-container: ${HERMES_CONTAINER}
-task_timeout_s: 600
-max_turns: 40

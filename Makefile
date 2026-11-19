@@ -1,21 +1,18 @@
 PY ?= python
+FAMILY ?= update_ability/SM03_fact_correction
+RUN_ID ?= $(shell date +%Y%m%d)_smoke
+RUNS ?=
 
-.PHONY: env-check profile smoke run collect table
+.PHONY: profile baseline collect
 
-env-check:
-	$(PY) scripts/00_check_env.py
-
+# 数据集画像 -> reports/tables/t0_dataset_profile.*
 profile:
-	$(PY) scripts/01_profile_dataset.py
+	$(PY) scripts/profile_dataset.py --out reports/tables
 
-smoke:
-	$(PY) scripts/02_make_smoke_set.py
+# 跑一个 family 的 with / without paired run
+baseline:
+	bash scripts/run_baseline.sh --family $(FAMILY) --run-id $(RUN_ID)
 
-run:
-	$(PY) scripts/03_run.py
-
+# 汇总 run，生成 t1–t4；用法：make collect RUNS="experiments/run1 experiments/run2"
 collect:
-	$(PY) scripts/04_collect.py
-
-table:
-	$(PY) scripts/05_make_tables.py
+	$(PY) scripts/collect_results.py --runs $(RUNS) --out reports/tables

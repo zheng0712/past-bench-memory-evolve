@@ -1,9 +1,10 @@
-# 一次运行的配置快照。复制本目录并重命名为 YYYYMMDD_<task>_<agent>_<scale>
-run_id: example_sm01_hermes_smoke30
-task: SM01_preference_adoption
-agent: hermes_full
-model: qwen3.5-plus
-scale: smoke          # smoke | full
-seed: 0
-sample_file: data/samples/sm01_smoke30.jsonl
-dataset_root: benchmarks/PAST-Bench/self-evolve-tasks-v2/memory_ability/SM01_preference_adoption
+# 复制本目录为 experiments/<YYYYMMDD>_<family>_<run>
+# 实际运行由 scripts/run_baseline.sh 生成 cmd.txt 与 sequence_*.json
+run_id: example
+family: update_ability/SM03_fact_correction
+agent: hermes
+profile: qwen
+judge: qwen3.5-plus
+runtime: local
+sandbox: true
+compare_no_persistence: true

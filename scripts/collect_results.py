@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 VARIANTS = ("with_persistence", "without_persistence")
-TIMEOUT_WALL_S = 200.0
+SLOW_WALL_S = 200.0
 # 只有 learn / evaluation 阶段参与"分数-通过"与 judge 一致性判定；
 # baseline、control、reflection 按设计就是非通过态或诊断态。
 MEASURED_BUCKETS = {"learn", "evaluation"}
@@ -98,6 +98,7 @@ def build_rows(run_name: str, comp: dict[str, Any]) -> tuple[list[dict], list[di
                     "share_correctness": episode_field(ep, "task_components", "share_correctness"),
                     "turns": ep.get("total_turns"),
                     "wall_s": episode_field(ep, "timing", "wall_time_s"),
+                    "slow_gt_200s": bool((episode_field(ep, "timing", "wall_time_s", default=0) or 0) > SLOW_WALL_S),
                     "input_tokens": episode_field(ep, "token_usage", "input_tokens", default=0),
                     "output_tokens": episode_field(ep, "token_usage", "output_tokens", default=0),
                     "infra_blocked": bool(ep.get("infra_blocked")),
@@ -124,15 +125,12 @@ def classify(rows: list[dict]) -> list[dict]:
     result = []
     for row in rows:
         error = "none"
-        wall = row["wall_s"] or 0
         judge = row["judge_score"] or 0
         measured = row["bucket"] in MEASURED_BUCKETS
         if row["infra_blocked"]:
             error = "infra_blocked"
         elif row["response_chars"] == 0 and measured:
             error = "empty_response"
-        elif wall > TIMEOUT_WALL_S:
-            error = "timeout"
         elif measured and row["task_score"] is not None and row["task_score"] >= 0.7 and not row["passed"]:
             error = "pass_score_mismatch"
         elif measured and ((judge >= 0.7 and not row["hard_pass"]) or (judge < 0.5 and row["hard_pass"])):
@@ -337,7 +335,7 @@ def main() -> int:
     t2_fields = [
         "run", "family", "variant", "task_id", "bucket", "task_score", "passed",
         "hard_pass", "judge_score", "content_correctness", "grounding",
-        "share_correctness", "turns", "wall_s", "input_tokens", "output_tokens",
+        "share_correctness", "turns", "wall_s", "slow_gt_200s", "input_tokens", "output_tokens",
         "infra_blocked", "response_chars", "memory_chars", "skill_count",
     ]
     write_csv(out_dir / "t2_episodes.csv", classified, t2_fields)
@@ -346,8 +344,8 @@ def main() -> int:
         "",
         f"共 {len(classified)} 行（with/without 两个变体分别计数，含 reflection 等无评分阶段）。",
         "",
-        "| run | variant | task_id | bucket | score | passed | hard | judge | content | turns | wall_s | tokens |",
-        "|---|---|---|---|---:|---|---|---:|---:|---:|---:|---:|",
+        "| run | variant | task_id | bucket | score | passed | hard | judge | content | turns | wall_s | slow>200s | tokens |",
+        "|---|---|---|---|---:|---|---|---:|---:|---:|---:|---|---:|",
     ]
     for row in classified:
         tokens = (row["input_tokens"] or 0) + (row["output_tokens"] or 0)
@@ -355,14 +353,14 @@ def main() -> int:
             f"| {row['run']} | {row['variant']} | {row['task_id']} | {row['bucket']} | "
             f"{fmt(row['task_score'])} | {fmt(row['passed'])} | {fmt(row['hard_pass'])} | "
             f"{fmt(row['judge_score'])} | {fmt(row['content_correctness'])} | {row['turns']} | "
-            f"{fmt(row['wall_s'], 1)} | {tokens} |"
+            f"{fmt(row['wall_s'], 1)} | {fmt(row['slow_gt_200s'])} | {tokens} |"
         )
     lines.append("")
     (out_dir / "t2_episodes.md").write_text("\n".join(lines), encoding="utf-8")
 
     # t3：失败分类
     order = [
-        "infra_blocked", "empty_response", "timeout", "pass_score_mismatch",
+        "infra_blocked", "empty_response", "pass_score_mismatch",
         "judge_mismatch", "persistence_anomaly", "none",
     ]
     eligible = [row for row in classified if row["bucket"] != "reflection" and row["task_score"] is not None]
@@ -387,7 +385,7 @@ def main() -> int:
     lines = [
         "# 失败分类与比例 t3",
         "",
-        f"分母：{total} 条有评分的 episode（with/without 合计）；另有 {excluded} 条 reflection 等无评分记录不参与比例。每条只记一个主类别，优先级：infra > empty_response > timeout > pass_score_mismatch > judge_mismatch > persistence_anomaly。",
+        f"分母：{total} 条有评分的 episode（with/without 合计）；另有 {excluded} 条 reflection 等无评分记录不参与比例。每条只记一个主类别，优先级：infra > empty_response > pass_score_mismatch > judge_mismatch > persistence_anomaly。wall_time_s>200s 仅作注释，不计入失败分类。",
         "",
         "| error_type | 条数 | 占比 | 典型案例 |",
         "|---|---:|---:|---|",
@@ -395,7 +393,14 @@ def main() -> int:
     for row in t3_rows:
         lines.append(f"| {row['error_type']} | {row['count']} | {row['pct']} | {row['examples']} |")
 
+    slow_rows = [
+        row for row in classified
+        if row["slow_gt_200s"] and row["bucket"] != "reflection"
+    ]
     lines += [
+        "",
+        f"注：另有 {len(slow_rows)} 条 episode wall_time_s>200s，均正常完成并评分，不计入失败分类"
+        + (f"（{'; '.join(str(r['task_id']) for r in slow_rows[:3])} 等）。" if slow_rows else "。"),
         "",
         "## family 级异常",
         "",

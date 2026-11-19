@@ -1,8 +1,0 @@
-# SM03 事实纠正（update_ability）
-task: SM03_fact_correction
-benchmark: PAST-Bench
-dataset_root: benchmarks/PAST-Bench/self-evolve-tasks-v2/update_ability/SM03_fact_correction
-family: family.yaml
-splits: []       # TODO: 按实际目录补齐
-metrics: []      # TODO: 按 dataset card 补齐
-smoke_size: 30

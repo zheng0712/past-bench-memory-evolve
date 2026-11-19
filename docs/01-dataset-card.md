@@ -1,6 +1,6 @@
 # 数据集卡片：PAST-Bench v2（self-evolve-tasks-v2）
 
-> 本卡片结论以 `benchmarks/PAST-Bench` 当前锁定 commit `f822351` 的实际文件与两次冒烟结果为准。
+> 本卡片结论以 `benchmarks/PAST-Bench` 当前锁定 commit `f822351` 的实际文件与有效运行结果为准。
 
 ## 1. 来源与构建方式
 
@@ -125,26 +125,18 @@ self-evolve-tasks-v2/<ability>/<family_id>/
 
 `write_precision` 与 `evolve_score` 的定义见 [self_evolve.py](file:///c:/Users/zgz/Desktop/新人培养/PAST-Bench/src/past_bench/runner/self_evolve.py#L2095-L2138)。
 
-### 两次冒烟结果
+### 实验数据
 
-| family | with eval | without eval | delta | with pass | without pass |
-|---|---:|---:|---:|---:|---:|
-| SM01 | 1.000 | 0.400 | +0.600 | 100% | 0% |
-| SM03 | 1.000 | 0.704 | +0.296 | 100% | 0% |
+有效 run、逐 episode 结果与问题分类见 `reports/experiment-report.md`；数据集层面的统计画像见 `reports/tables/t0_dataset_profile.md`。
 
-## 4. 统计画像与已发现的数据集问题
+## 4. 已发现的数据集问题
 
-来自 `reports/tables/t0_dataset_profile.md` 与 `t3_failures.md`：
+完整清单见 `reports/experiment-report.md` 的“问题台账”一节。核心几项：
 
-| 问题 | 证据 |
-|---|---|
-| 存在未使用目录 | PG 6 个、update 7 个目录不在 `episode_order` 中；如 SM03 的 `learn_a_seed_stale_fact` |
-| 编排 episode 数 ≠ 运行期数量 | SM01 编排 8，运行 9（reflection） |
-| preset 与生成器规则不一致 | EP01 preset 两个 learn 阶段都是 `learn_a`、reflection=false；SM01 preset learn_b=true |
-| 分数与通过率分裂 | SM03 without：0.704 分但通过率 0% |
-| 控制组区分度不足 | `SM03_CONTROL_003` 两个变体都是 0.6、都不通过；SM01 三个 control 在多组配置下都是 0.6 |
-| judge 不稳定 | 30 条有评分 episode 中 3 条 judge 与硬条件方向不一致（10%） |
-| 耗时离群 | 2 条超过 200s（6.7%），其余 15~80s |
+- SM03 的 `learn_a_seed_stale_fact` 存在于磁盘但不在 `episode_order` 中，运行期不执行。
+- SM01 cold 的 prompt 要求 “clear and readable”，但 expectations 里 `require_tsv_output=true`。
+- SM03 的 `without_persistence` 仍注入 stale 记忆与诱饵日期，不是零记忆对照。
+- 控制组区分度不足：SM01 shortcut control 在有效 run 中从未达到 1.000。
 
 ## 5. 复现入口
 
@@ -155,10 +147,14 @@ source benchmarks/PAST-Bench/.venv/bin/activate
 python scripts/profile_dataset.py                       # t0
 python scripts/collect_results.py \
   --runs experiments/20261118_sm01_hermes_smoke \
+         experiments/20261119_sm01_run2 \
+         experiments/20261119_sm01_run3 \
          experiments/20261118_sm03_hermes_smoke \
-  --out reports/tables                                  # t1/t2/t3
+         experiments/20261119_sm03_run4 \
+         experiments/20261119_sm03_run5 \
+  --out reports/tables                                  # t1–t4
 
 bash scripts/run_baseline.sh \
   --family memory_ability/SM01_preference_adoption \
-  --run-id 20261119_sm01_hermes                        # 新 run
+  --run-id 20261119_sm01_run4                           # 新 run
 ```

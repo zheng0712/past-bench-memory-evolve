@@ -1,1 +1,1 @@
-"""Agent 适配层：hermes_full / pi / no_memory。"""
+"""预留；当前未使用。实验逻辑在 scripts/ 与 PAST-Bench 上游。"""
