@@ -95,6 +95,7 @@ def build_rows(run_name: str, comp: dict[str, Any]) -> tuple[list[dict], list[di
                     "input_tokens": episode_field(ep, "token_usage", "input_tokens", default=0),
                     "output_tokens": episode_field(ep, "token_usage", "output_tokens", default=0),
                     "infra_blocked": bool(ep.get("infra_blocked")),
+                    "response_chars": len((ep.get("final_response_text") or "").strip()),
                     "memory_chars": episode_field(ep, "artifacts", "memory_chars", default=0),
                     "skill_count": episode_field(ep, "artifacts", "skill_count", default=0),
                 }
@@ -122,6 +123,8 @@ def classify(rows: list[dict]) -> list[dict]:
         measured = row["bucket"] in MEASURED_BUCKETS
         if row["infra_blocked"]:
             error = "infra_blocked"
+        elif row["response_chars"] == 0 and measured:
+            error = "empty_response"
         elif wall > TIMEOUT_WALL_S:
             error = "timeout"
         elif measured and row["task_score"] is not None and row["task_score"] >= 0.7 and not row["passed"]:
@@ -251,6 +254,10 @@ def main() -> int:
 
     # t4：同一 family 重复运行的稳定性（均值 / 标准差）
     t4_rows = []
+    empty_by_family: dict[str, int] = {}
+    for row in classified:
+        if row["error_type"] == "empty_response":
+            empty_by_family[row["family"]] = empty_by_family.get(row["family"], 0) + 1
     by_family: dict[str, list[dict]] = {}
     for row in t1_rows:
         by_family.setdefault(row["family"], []).append(row)
@@ -287,6 +294,7 @@ def main() -> int:
                 "with_evolve_std": round(w_evolve[1], 6),
                 "without_evolve_mean": round(o_evolve[0], 6),
                 "without_evolve_std": round(o_evolve[1], 6),
+                "empty_responses": empty_by_family.get(family, 0),
                 "infra_blocks": sum(r["infra_blocks"] or 0 for r in rows),
             }
         )
@@ -298,8 +306,8 @@ def main() -> int:
         "",
         f"来源 run 数：{len(t1_rows)}（按 family 聚合）。均值为算术平均，标准差为样本标准差（n≥2 时计算）。",
         "",
-        "| family | runs | with eval | without eval | delta | with pass | without pass | with evolve | without evolve | infra |",
-        "|---|---:|---|---|---|---|---|---|---|---:|",
+        "| family | runs | with eval | without eval | delta | with pass | without pass | with evolve | without evolve | empty resp | infra |",
+        "|---|---:|---|---|---|---|---|---|---|---:|---:|",
     ]
     for row in t4_rows:
         def show(mean_key: str, std_key: str) -> str:
@@ -310,7 +318,7 @@ def main() -> int:
             f"{show('without_eval_mean', 'without_eval_std')} | {show('delta_mean', 'delta_std')} | "
             f"{show('with_pass_mean', 'with_pass_std')} | {show('without_pass_mean', 'without_pass_std')} | "
             f"{show('with_evolve_mean', 'with_evolve_std')} | {show('without_evolve_mean', 'without_evolve_std')} | "
-            f"{row['infra_blocks']} |"
+            f"{row['empty_responses']} | {row['infra_blocks']} |"
         )
     lines += [
         "",
@@ -324,7 +332,7 @@ def main() -> int:
         "run", "family", "variant", "task_id", "bucket", "task_score", "passed",
         "hard_pass", "judge_score", "content_correctness", "grounding",
         "share_correctness", "turns", "wall_s", "input_tokens", "output_tokens",
-        "infra_blocked", "memory_chars", "skill_count",
+        "infra_blocked", "response_chars", "memory_chars", "skill_count",
     ]
     write_csv(out_dir / "t2_episodes.csv", classified, t2_fields)
     lines = [
@@ -348,7 +356,7 @@ def main() -> int:
 
     # t3：失败分类
     order = [
-        "infra_blocked", "timeout", "pass_score_mismatch",
+        "infra_blocked", "empty_response", "timeout", "pass_score_mismatch",
         "judge_mismatch", "persistence_anomaly", "none",
     ]
     eligible = [row for row in classified if row["bucket"] != "reflection" and row["task_score"] is not None]
@@ -373,7 +381,7 @@ def main() -> int:
     lines = [
         "# 失败分类与比例 t3",
         "",
-        f"分母：{total} 条有评分的 episode（with/without 合计）；另有 {excluded} 条 reflection 等无评分记录不参与比例。每条只记一个主类别，优先级：infra > timeout > pass_score_mismatch > judge_mismatch > persistence_anomaly。",
+        f"分母：{total} 条有评分的 episode（with/without 合计）；另有 {excluded} 条 reflection 等无评分记录不参与比例。每条只记一个主类别，优先级：infra > empty_response > timeout > pass_score_mismatch > judge_mismatch > persistence_anomaly。",
         "",
         "| error_type | 条数 | 占比 | 典型案例 |",
         "|---|---:|---:|---|",
