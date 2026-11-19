@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import statistics
 from pathlib import Path
 from typing import Any
 
@@ -248,6 +249,76 @@ def main() -> int:
     ]
     (out_dir / "t1_baseline.md").write_text("\n".join(lines), encoding="utf-8")
 
+    # t4：同一 family 重复运行的稳定性（均值 / 标准差）
+    t4_rows = []
+    by_family: dict[str, list[dict]] = {}
+    for row in t1_rows:
+        by_family.setdefault(row["family"], []).append(row)
+
+    def stat(values: list[Any]) -> tuple[float, float, int]:
+        clean = [float(v) for v in values if v is not None]
+        if not clean:
+            return 0.0, 0.0, 0
+        return statistics.mean(clean), (statistics.stdev(clean) if len(clean) > 1 else 0.0), len(clean)
+
+    for family, rows in sorted(by_family.items()):
+        w_eval = stat([r["with_eval"] for r in rows])
+        o_eval = stat([r["without_eval"] for r in rows])
+        delta = stat([r["delta"] for r in rows])
+        w_pass = stat([r["with_pass"] for r in rows])
+        o_pass = stat([r["without_pass"] for r in rows])
+        w_evolve = stat([r["with_evolve"] for r in rows])
+        o_evolve = stat([r["without_evolve"] for r in rows])
+        t4_rows.append(
+            {
+                "family": family,
+                "runs": len(rows),
+                "with_eval_mean": round(w_eval[0], 6),
+                "with_eval_std": round(w_eval[1], 6),
+                "without_eval_mean": round(o_eval[0], 6),
+                "without_eval_std": round(o_eval[1], 6),
+                "delta_mean": round(delta[0], 6),
+                "delta_std": round(delta[1], 6),
+                "with_pass_mean": round(w_pass[0], 6),
+                "with_pass_std": round(w_pass[1], 6),
+                "without_pass_mean": round(o_pass[0], 6),
+                "without_pass_std": round(o_pass[1], 6),
+                "with_evolve_mean": round(w_evolve[0], 6),
+                "with_evolve_std": round(w_evolve[1], 6),
+                "without_evolve_mean": round(o_evolve[0], 6),
+                "without_evolve_std": round(o_evolve[1], 6),
+                "infra_blocks": sum(r["infra_blocks"] or 0 for r in rows),
+            }
+        )
+
+    t4_fields = list(t4_rows[0].keys()) if t4_rows else ["family"]
+    write_csv(out_dir / "t4_stability.csv", t4_rows, t4_fields)
+    lines = [
+        "# 重复运行稳定性 t4",
+        "",
+        f"来源 run 数：{len(t1_rows)}（按 family 聚合）。均值为算术平均，标准差为样本标准差（n≥2 时计算）。",
+        "",
+        "| family | runs | with eval | without eval | delta | with pass | without pass | with evolve | without evolve | infra |",
+        "|---|---:|---|---|---|---|---|---|---|---:|",
+    ]
+    for row in t4_rows:
+        def show(mean_key: str, std_key: str) -> str:
+            return f"{row[mean_key]:.3f} ± {row[std_key]:.3f}"
+
+        lines.append(
+            f"| {row['family']} | {row['runs']} | {show('with_eval_mean', 'with_eval_std')} | "
+            f"{show('without_eval_mean', 'without_eval_std')} | {show('delta_mean', 'delta_std')} | "
+            f"{show('with_pass_mean', 'with_pass_std')} | {show('without_pass_mean', 'without_pass_std')} | "
+            f"{show('with_evolve_mean', 'with_evolve_std')} | {show('without_evolve_mean', 'without_evolve_std')} | "
+            f"{row['infra_blocks']} |"
+        )
+    lines += [
+        "",
+        "说明：pass 为 0~1 比例；标准差反映同一配置重复运行时的波动。",
+        "",
+    ]
+    (out_dir / "t4_stability.md").write_text("\n".join(lines), encoding="utf-8")
+
     # t2：逐 episode
     t2_fields = [
         "run", "family", "variant", "task_id", "bucket", "task_score", "passed",
@@ -330,7 +401,7 @@ def main() -> int:
     ]
     (out_dir / "t3_failures.md").write_text("\n".join(lines), encoding="utf-8")
 
-    print(f"t1: {len(t1_rows)} 行  t2: {len(classified)} 行  t3: {len(t3_rows)} 类")
+    print(f"t1: {len(t1_rows)} 行  t2: {len(classified)} 行  t3: {len(t3_rows)} 类  t4: {len(t4_rows)} 行")
     return 0
 
 
