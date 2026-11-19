@@ -45,6 +45,12 @@ def episode_field(ep: dict[str, Any], *keys: str, default: Any = None) -> Any:
     return default if cur is None else cur
 
 
+def is_empty_response(text: Any) -> bool:
+    """PAST-Bench 用 '(no response)' 占位，不能只判断空字符串。"""
+    normalized = str(text or "").strip().lower()
+    return normalized in {"", "(no response)", "no response"}
+
+
 def build_rows(run_name: str, comp: dict[str, Any]) -> tuple[list[dict], list[dict]]:
     family_rows: list[dict] = []
     episode_rows: list[dict] = []
@@ -95,7 +101,7 @@ def build_rows(run_name: str, comp: dict[str, Any]) -> tuple[list[dict], list[di
                     "input_tokens": episode_field(ep, "token_usage", "input_tokens", default=0),
                     "output_tokens": episode_field(ep, "token_usage", "output_tokens", default=0),
                     "infra_blocked": bool(ep.get("infra_blocked")),
-                    "response_chars": len((ep.get("final_response_text") or "").strip()),
+                    "response_chars": 0 if is_empty_response(ep.get("final_response_text")) else len(str(ep.get("final_response_text")).strip()),
                     "memory_chars": episode_field(ep, "artifacts", "memory_chars", default=0),
                     "skill_count": episode_field(ep, "artifacts", "skill_count", default=0),
                 }
