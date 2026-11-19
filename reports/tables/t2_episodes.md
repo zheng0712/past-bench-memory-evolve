@@ -1,6 +1,6 @@
 # 逐 episode 结果 t2
 
-共 32 行（with/without 两个变体分别计数，含 reflection 等无评分阶段）。
+共 96 行（with/without 两个变体分别计数，含 reflection 等无评分阶段）。
 
 | run | variant | task_id | bucket | score | passed | hard | judge | content | turns | wall_s | tokens |
 |---|---|---|---|---:|---|---|---:|---:|---:|---:|---:|
@@ -36,3 +36,67 @@
 | 20261118_sm03_hermes_smoke | without_persistence | SM03_CONTROL_003 | control | 0.600 | 否 | 否 | 0.900 | 0.000 | 1 | 82.2 | 55493 |
 | 20261118_sm03_hermes_smoke | without_persistence | SM03_CONTROL_002 | control | 1.000 | 是 | 是 | 1.000 | 1.000 | 1 | 24.7 | 18689 |
 | 20261118_sm03_hermes_smoke | without_persistence | SM03_CONTROL_001 | control | 1.000 | 是 | 是 | 1.000 | 1.000 | 1 | 23.4 | 18456 |
+| 20261119_sm01_run2 | with_persistence | SM01_COLD_001 | baseline | 0.600 | 否 | 否 | 1.000 | 0.000 | 1 | 26.2 | 18852 |
+| 20261119_sm01_run2 | with_persistence | SM01_LEARN_A_001 | learn | 0.760 | 否 | 否 | 1.000 | 0.000 | 1 | 32.6 | 19658 |
+| 20261119_sm01_run2 | with_persistence | SM01_LEARN_B_001 | learn | 1.000 | 是 | 是 | 1.000 | 1.000 | 1 | 20.5 | 17803 |
+| 20261119_sm01_run2 | with_persistence | SM01_LEARN_B_001_REFLECT | reflection | 0.000 | 否 | - | - | - | 1 | 12.6 | 4193 |
+| 20261119_sm01_run2 | with_persistence | SM01_EVAL_NEAR_001 | evaluation | 0.704 | 否 | 否 | 1.000 | 0.000 | 1 | 20.8 | 17778 |
+| 20261119_sm01_run2 | with_persistence | SM01_EVAL_FAR_001 | evaluation | 1.000 | 是 | 是 | 1.000 | 1.000 | 1 | 22.4 | 18167 |
+| 20261119_sm01_run2 | with_persistence | SM01_CONTROL_002 | control | 0.600 | 否 | 否 | 1.000 | 0.000 | 1 | 29.0 | 18922 |
+| 20261119_sm01_run2 | with_persistence | SM01_CONTROL_001 | control | 1.000 | 是 | 是 | 1.000 | 1.000 | 1 | 22.5 | 17661 |
+| 20261119_sm01_run2 | with_persistence | SM01_CONTROL_003 | control | 0.600 | 否 | 否 | 1.000 | 0.000 | 1 | 20.6 | 14147 |
+| 20261119_sm01_run2 | without_persistence | SM01_COLD_001 | baseline | 0.600 | 否 | 否 | 1.000 | 0.000 | 1 | 26.2 | 18852 |
+| 20261119_sm01_run2 | without_persistence | SM01_LEARN_A_001 | learn | 0.560 | 否 | 否 | 1.000 | 0.000 | 1 | 31.8 | 20066 |
+| 20261119_sm01_run2 | without_persistence | SM01_LEARN_B_001 | learn | 0.600 | 否 | 否 | 0.700 | 0.000 | 1 | 19.9 | 14144 |
+| 20261119_sm01_run2 | without_persistence | SM01_LEARN_B_001_REFLECT | reflection | 0.000 | 否 | - | - | - | 1 | 31.0 | 19434 |
+| 20261119_sm01_run2 | without_persistence | SM01_EVAL_NEAR_001 | evaluation | 0.400 | 否 | 否 | 0.250 | 0.000 | 1 | 19.3 | 14011 |
+| 20261119_sm01_run2 | without_persistence | SM01_EVAL_FAR_001 | evaluation | 0.400 | 否 | 否 | 0.900 | 0.000 | 1 | 20.5 | 14137 |
+| 20261119_sm01_run2 | without_persistence | SM01_CONTROL_002 | control | 0.800 | 否 | 否 | 1.000 | 0.500 | 1 | 33.0 | 20341 |
+| 20261119_sm01_run2 | without_persistence | SM01_CONTROL_001 | control | 1.000 | 是 | 是 | 1.000 | 1.000 | 1 | 23.7 | 14580 |
+| 20261119_sm01_run2 | without_persistence | SM01_CONTROL_003 | control | 0.600 | 否 | 否 | 1.000 | 0.000 | 1 | 19.2 | 13901 |
+| 20261119_sm01_run3 | with_persistence | SM01_COLD_001 | baseline | 0.600 | 否 | 否 | 1.000 | 0.000 | 1 | 18.7 | 13994 |
+| 20261119_sm01_run3 | with_persistence | SM01_LEARN_A_001 | learn | 0.760 | 否 | 否 | 1.000 | 0.000 | 1 | 35.5 | 30848 |
+| 20261119_sm01_run3 | with_persistence | SM01_LEARN_B_001 | learn | 0.760 | 否 | 否 | 0.500 | 0.000 | 1 | 18.5 | 17684 |
+| 20261119_sm01_run3 | with_persistence | SM01_LEARN_B_001_REFLECT | reflection | 0.000 | 否 | - | - | - | 1 | 15.9 | 4420 |
+| 20261119_sm01_run3 | with_persistence | SM01_EVAL_NEAR_001 | evaluation | 0.704 | 否 | 否 | 0.500 | 0.000 | 1 | 18.8 | 17757 |
+| 20261119_sm01_run3 | with_persistence | SM01_EVAL_FAR_001 | evaluation | 0.704 | 否 | 否 | 0.700 | 0.000 | 1 | 20.1 | 18019 |
+| 20261119_sm01_run3 | with_persistence | SM01_CONTROL_002 | control | 0.600 | 否 | 否 | 1.000 | 0.000 | 1 | 26.2 | 23644 |
+| 20261119_sm01_run3 | with_persistence | SM01_CONTROL_001 | control | 0.600 | 否 | 否 | 0.500 | 0.000 | 1 | 18.9 | 17266 |
+| 20261119_sm01_run3 | with_persistence | SM01_CONTROL_003 | control | 0.600 | 否 | 否 | 1.000 | 0.000 | 1 | 21.0 | 14004 |
+| 20261119_sm01_run3 | without_persistence | SM01_COLD_001 | baseline | 0.600 | 否 | 否 | 1.000 | 0.000 | 1 | 18.7 | 13994 |
+| 20261119_sm01_run3 | without_persistence | SM01_LEARN_A_001 | learn | 0.560 | 否 | 否 | 1.000 | 0.000 | 1 | 29.0 | 19840 |
+| 20261119_sm01_run3 | without_persistence | SM01_LEARN_B_001 | learn | 0.600 | 否 | 否 | 0.500 | 0.000 | 1 | 19.5 | 13883 |
+| 20261119_sm01_run3 | without_persistence | SM01_LEARN_B_001_REFLECT | reflection | 0.000 | 否 | - | - | - | 1 | 22.4 | 10936 |
+| 20261119_sm01_run3 | without_persistence | SM01_EVAL_NEAR_001 | evaluation | 0.400 | 否 | 否 | 0.300 | 0.000 | 1 | 20.0 | 14085 |
+| 20261119_sm01_run3 | without_persistence | SM01_EVAL_FAR_001 | evaluation | 0.400 | 否 | 否 | 0.700 | 0.000 | 1 | 20.2 | 14065 |
+| 20261119_sm01_run3 | without_persistence | SM01_CONTROL_002 | control | 0.600 | 否 | 否 | 1.000 | 0.000 | 1 | 24.6 | 18836 |
+| 20261119_sm01_run3 | without_persistence | SM01_CONTROL_001 | control | 1.000 | 是 | 是 | 1.000 | 1.000 | 1 | 31.4 | 14558 |
+| 20261119_sm01_run3 | without_persistence | SM01_CONTROL_003 | control | 0.600 | 否 | 否 | 0.900 | 0.000 | 1 | 19.9 | 14150 |
+| 20261119_sm03_run2 | with_persistence | SM03_COLD_001 | baseline | 0.600 | 否 | 否 | 0.000 | 0.000 | 1 | 17.5 | 18386 |
+| 20261119_sm03_run2 | with_persistence | SM03_UPDATE_001 | learn | 1.000 | 是 | 是 | 1.000 | 1.000 | 1 | 26.9 | 25319 |
+| 20261119_sm03_run2 | with_persistence | SM03_EVAL_NEAR_001 | evaluation | 1.000 | 是 | 是 | 0.900 | 1.000 | 1 | 23.6 | 22967 |
+| 20261119_sm03_run2 | with_persistence | SM03_EVAL_FAR_001 | evaluation | 1.000 | 是 | 是 | 0.300 | 1.000 | 1 | 19.5 | 17924 |
+| 20261119_sm03_run2 | with_persistence | SM03_CONTROL_003 | control | 0.600 | 否 | 否 | 0.900 | 0.000 | 1 | 51.8 | 50076 |
+| 20261119_sm03_run2 | with_persistence | SM03_CONTROL_002 | control | 1.000 | 是 | 是 | 1.000 | 1.000 | 1 | 20.9 | 17640 |
+| 20261119_sm03_run2 | with_persistence | SM03_CONTROL_001 | control | 1.000 | 是 | 是 | 1.000 | 1.000 | 1 | 17.1 | 17284 |
+| 20261119_sm03_run2 | without_persistence | SM03_COLD_001 | baseline | 0.600 | 否 | 否 | 0.300 | 0.000 | 1 | 325.2 | 1101893 |
+| 20261119_sm03_run2 | without_persistence | SM03_UPDATE_001 | learn | 0.560 | 否 | 否 | 1.000 | 1.000 | 1 | 26.4 | 19255 |
+| 20261119_sm03_run2 | without_persistence | SM03_EVAL_NEAR_001 | evaluation | 0.464 | 否 | 否 | 0.000 | 0.000 | 1 | 209.9 | 0 |
+| 20261119_sm03_run2 | without_persistence | SM03_EVAL_FAR_001 | evaluation | 0.304 | 否 | 否 | 0.000 | 0.000 | 1 | 7.3 | 0 |
+| 20261119_sm03_run2 | without_persistence | SM03_CONTROL_003 | control | 0.200 | 否 | 否 | 0.000 | 0.000 | 1 | 5.9 | 0 |
+| 20261119_sm03_run2 | without_persistence | SM03_CONTROL_002 | control | 0.200 | 否 | 否 | 0.000 | 0.000 | 1 | 11.8 | 0 |
+| 20261119_sm03_run2 | without_persistence | SM03_CONTROL_001 | control | 0.200 | 否 | 否 | 0.000 | 0.000 | 1 | 5.9 | 0 |
+| 20261119_sm03_run3 | with_persistence | SM03_COLD_001 | baseline | 0.200 | 否 | 否 | 0.000 | 0.000 | 1 | 6.7 | 0 |
+| 20261119_sm03_run3 | with_persistence | SM03_UPDATE_001 | learn | 0.280 | 否 | 否 | 0.000 | 0.000 | 1 | 7.1 | 0 |
+| 20261119_sm03_run3 | with_persistence | SM03_EVAL_NEAR_001 | evaluation | 0.304 | 否 | 否 | 0.000 | 0.000 | 1 | 18.8 | 0 |
+| 20261119_sm03_run3 | with_persistence | SM03_EVAL_FAR_001 | evaluation | 0.304 | 否 | 否 | 0.000 | 0.000 | 1 | 5.9 | 0 |
+| 20261119_sm03_run3 | with_persistence | SM03_CONTROL_003 | control | 0.200 | 否 | 否 | 0.000 | 0.000 | 1 | 6.0 | 0 |
+| 20261119_sm03_run3 | with_persistence | SM03_CONTROL_002 | control | 0.200 | 否 | 否 | 0.000 | 0.000 | 1 | 5.9 | 0 |
+| 20261119_sm03_run3 | with_persistence | SM03_CONTROL_001 | control | 0.200 | 否 | 否 | 0.000 | 0.000 | 1 | 10.6 | 0 |
+| 20261119_sm03_run3 | without_persistence | SM03_COLD_001 | baseline | 0.200 | 否 | 否 | 0.000 | 0.000 | 1 | 6.0 | 0 |
+| 20261119_sm03_run3 | without_persistence | SM03_UPDATE_001 | learn | 0.280 | 否 | 否 | 0.000 | 0.000 | 1 | 12.0 | 0 |
+| 20261119_sm03_run3 | without_persistence | SM03_EVAL_NEAR_001 | evaluation | 0.304 | 否 | 否 | 0.000 | 0.000 | 1 | 36.4 | 0 |
+| 20261119_sm03_run3 | without_persistence | SM03_EVAL_FAR_001 | evaluation | 0.304 | 否 | 否 | 0.000 | 0.000 | 1 | 5.9 | 0 |
+| 20261119_sm03_run3 | without_persistence | SM03_CONTROL_003 | control | 0.200 | 否 | 否 | 0.000 | 0.000 | 1 | 6.2 | 0 |
+| 20261119_sm03_run3 | without_persistence | SM03_CONTROL_002 | control | 0.200 | 否 | 否 | 0.000 | 0.000 | 1 | 5.9 | 0 |
+| 20261119_sm03_run3 | without_persistence | SM03_CONTROL_001 | control | 0.200 | 否 | 否 | 0.000 | 0.000 | 1 | 6.0 | 0 |

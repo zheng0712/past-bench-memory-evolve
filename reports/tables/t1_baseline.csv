@@ -1,3 +1,7 @@
 run,family,episodes,with_eval,without_eval,delta,with_pass,without_pass,pass_delta,with_mech,without_mech,with_evolve,without_evolve,infra_blocks
 20261118_sm01_hermes_smoke,SM01_preference_adoption,9,1.0,0.4,0.6,1.0,0.0,1.0,0.966667,0.4,0.386667,0.0,0
 20261118_sm03_hermes_smoke,SM03_fact_correction,7,1.0,0.704,0.29600000000000004,1.0,0.0,1.0,0.866667,0.566667,0.346667,0.058933,0
+20261119_sm01_run2,SM01_preference_adoption,9,0.852,0.4,0.45199999999999996,0.5,0.0,0.5,0.866667,0.4,0.2184,0.0,0
+20261119_sm01_run3,SM01_preference_adoption,9,0.704,0.4,0.30399999999999994,0.0,0.0,0,0.7,0.4,0.0728,0.0,0
+20261119_sm03_run2,SM03_fact_correction,7,1.0,0.384,0.616,1.0,0.0,1.0,0.966667,0.497701,0.386667,0.0,0
+20261119_sm03_run3,SM03_fact_correction,7,0.304,0.304,0.0,0.0,0.0,0,0.566667,0.566667,0.058933,0.058933,0
