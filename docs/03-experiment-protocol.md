@@ -5,7 +5,9 @@
 每个 run 用 `--compare-no-persistence` 同时跑两个变体：
 
 - `with_persistence`：持久化开启，允许跨 episode 复用记忆/技能/会话；
-- `without_persistence`：持久化关闭，用于 paired 对照。
+- `without_persistence`：工具面与 with 相同，但每个 episode 强制 fresh、不保存 anchor，只剥离跨 episode 状态（对齐论文 §3 / 附录 E.1）。
+
+without 的三种形态（旧实现、正确隔离、空记忆文件）与结果单独见 `reports/experiment-report.md` §4；代码改动见 `patches/without_state_isolation.patch`。
 
 ```text
 experiments/<run>/

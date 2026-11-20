@@ -18,10 +18,11 @@
 | SM01_preference_adoption | 0.852 ± 0.148 | 0.400 | 0.452 ± 0.148 | 50% |
 | SM03_fact_correction | 1.000 ± 0.000 | 0.704 | 0.296 ± 0.000 | 100% |
 
-两点说明：
+三点说明：
 
 - `judge_score` 只写入 `communication`，不进入 `task_score`，也不与论文 judge 对比。
-- SM03 run2 的 without 变体、run3 的两个变体有空响应（run3 伴随 403），已作为无效 run 剔除；原始数据在报告 §4。
+- SM03 run2 的 without 变体、run3 的两个变体有空响应（run3 伴随 403），已作为无效 run 剔除；原始数据在报告 §5。
+- without 口径核验实验单独列在报告 §4，不并入上表。
 
 ## 目录
 
@@ -35,6 +36,7 @@
 │   ├── collect_results.py   # 生成 t1–t4
 │   └── profile_dataset.py   # 生成数据集画像 t0
 ├── experiments/<run>/       # 每次运行一个目录
+├── patches/                 # 为对齐原文做的上游代码改动
 ├── reports/                 # 实验报告与表格
 └── docs/                    # dataset card / Hermes 接入 / 实验协议
 ```
@@ -79,18 +81,21 @@ experiments/<run>/
    - §1 有效实验表
    - §2 问题台账（所有问题统一记录）
    - §3 按原始评分要求的分析
-   - §4 全部原始数据（含无效 run）
+   - §4 without 口径核验实验
+   - §5 全部原始数据（含无效 run）
 2. **表格**：`reports/tables/t0_dataset_profile.*`、`t1_baseline.*`、`t2_episodes.*`、`t3_failures.*`、`t4_stability.*`
 3. **单次运行**：`experiments/<run>/with_persistence/sequence_results.json`
 
 ## 已知问题
 
 - **SM01 最终回复没有 TSV**：39/48 条非空记录（81.3%），其中 6 条只差 TSV；见报告 §2 `ISS-01`。
-- **SM03 403/空响应**：run2 without 5/7、run3 14/14；已从有效表剔除，原始证据在报告 §4.5。
-- **慢 episode**：`wall_time_s>200s` 只标注，不当作失败；报告 §4.6。
+- **SM01 without 恒为 0.400**：空 state 下没有记忆注入，qwen 也不主动调用 memory，触发 `missing_retrieval_cap`；核验见报告 §4。
+- **SM03 403/空响应**：run2 without 5/7、run3 14/14；已从有效表剔除，原始证据在报告 §5.5。
+- **慢 episode**：`wall_time_s>200s` 只标注，不当作失败；报告 §5.6。
 
 ## 下一步
 
 1. 换独立 judge（论文用 MiniMax-M2.7），做 12 条校准，重判已有 trace。
 2. 扩大 family 与 run 数，统计大规模问题比例。
 3. 如需改上游 prompt/grader（SM01 TSV 表述），先单独开分支，避免影响与官方基线的可比性。
+4. 如需复现论文 SM01 without 0.600，换 MiniMax-M2.7 验证主动检索行为。

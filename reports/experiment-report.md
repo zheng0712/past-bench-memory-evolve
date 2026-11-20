@@ -200,9 +200,81 @@
 5. **family 指标**：with evaluation=1.000、pass=1.0、delta=0.400、write_precision=0.833、recall=1.0、update=1.0、retention=1.0、pollution=0（smoke 为 0.5）、mechanism=0.867（smoke）/0.967（run4、run5）、evolve=0.347（smoke）/0.387（run4、run5）；without evaluation=0.704、pass=0、delta=0.104、write=0.333、recall=0、update=0.5、mechanism=0.567、evolve=0.059。
 6. **结论**：SM03 的 with 变体在 3 个有效 run 上完全达到原文的 evaluation 目标；without 的 0.704 是 content=0 后 artifact 加分的结果，不是记忆机制成功。
 
-## 4. 原始数据
+## 4. without 口径核验实验
 
-### 4.1 全部 run 清单（含无效）
+本节是为对齐论文 §3 和附录 E.1 的 without 定义而单独做的核验，**不进入 §1 主表，不改变主结果**。
+
+### 4.1 原文口径
+
+> “无演化（w/o-evolve）条件拒绝运行时访问任何由任务族产生的状态；有演化（w/-evolve）条件则允许访问。两次运行共享相同的提示、评分器、工具栈与随机种子。”（论文 §3）
+
+> “每个回合都在全新会话中开始，基准不会追加较早回合的对话。持久化开启时，通过智能体原生的记忆、技能或历史接口暴露较早回合的状态；持久化关闭时则移除对该状态的访问。”（论文附录 E.1）
+
+> 表 13：持久化开/关配对保持固定“模型、智能体、提示、工具、上下文窗口、输出限制、智能体限制与压缩策略”，只改变“对留存状态的访问”。
+
+因此 without 的正确形态是：**工具面与 with 相同；每个回合强制 fresh；learn/update 的写入不冻结为 anchor；eval 不继承任务族产生的状态。**
+
+### 4.2 核验设计
+
+| 实验 | run | without 实现 | 目的 |
+|---|---|---|---|
+| A | 3 个有效主 run | 工具全关 | 主表口径 |
+| B | `20261120_sm01_wo_state_isolation` | 工具在、每回合 fresh、不存 anchor | 对齐原文 |
+| C | `20261120_sm01_wo_empty_memory` | 空 `MEMORY.md` 晚于 `artifact_before` 快照 | v1，验证失败 |
+| D | `20261120_sm01_wo_empty_memory_v2` | 空 `MEMORY.md` 早于快照 | 验证 cap |
+| E | `20261120_sm01_without_tool_parity` | 工具在、写入仍持久化 | 污染对照，作废 |
+
+### 4.3 结果（均为 without eval）
+
+| 实验 | eval | completion | `inj` | `mr` | `used` | `mem_exists` | 判定 |
+|---|---:|---:|---:|---:|---|---|---|
+| A 旧实现 | 0.400 | 0.25 | 0 | 0 | false | false | 主表口径 |
+| B 正确隔离 | 0.400 | 0.25 | 0 | 0 | false | false | 对齐原文 |
+| C 空文件 v1 | 0.400 | 0.25 | 0 | 0 | false | true | 时机错误 |
+| D 空文件 v2 | 0.680 | 0.60 | 1 | 0 | true | true | cap 解除 |
+| E 污染对照 | 0.852 | — | 1 | 0 | true | true | 作废 |
+
+### 4.4 归因
+
+- A / B / C → 0.400：空 state 下 `memory_injection_count=0`、`memory_read_count=0`，`used_expected_signal=false`，触发 `missing_retrieval_cap=0.25`。
+- B → D：0.400 → 0.680，共 +0.28：
+  - 解除 cap：completion 0.25 → 0.50，task +0.20；
+  - 空文件被 `require_memory_artifact` 计为 artifact presence：completion +0.10，task +0.08。
+- 论文 SM01 without 0.600 对应“`used=true`、无 artifact 加分”这一格，最可能来自 agent 主动调用 memory 工具。
+- qwen 在 SM01 所有 eval 的 `memory_read_count=0`，完全依赖被动注入；with 的 1.000 来自 `MEMORY.md` 自动注入，不是主动检索。
+
+### 4.5 复现
+
+```bash
+# B：正确隔离
+bash scripts/run_baseline.sh \
+  --family memory_ability/SM01_preference_adoption \
+  --run-id 20261120_sm01_wo_state_isolation
+
+# D：空记忆文件
+PB_WO_EMPTY_MEMORY=1 bash scripts/run_baseline.sh \
+  --family memory_ability/SM01_preference_adoption \
+  --run-id 20261120_sm01_wo_empty_memory_v2
+```
+
+代码改动见 `patches/without_state_isolation.patch`，包含：
+
+- `resolve_episode_tool_config`：without 不再关闭工具；
+- `build_hermes_extra_body`：`skip_memory` 不再跟随 `persistence_enabled`；
+- `prepare_history`：without 强制 fresh；
+- `save_anchor`：without 不保存 anchor；
+- `PB_WO_EMPTY_MEMORY=1`：仅用于实验 D 的空文件开关，默认关闭。
+
+### 4.6 结论
+
+- 主结果不变：SM01 with 0.852 ± 0.148、without 0.400、Δ 0.452 ± 0.148。
+- without 已按原文对齐：工具在、可写、不继承任务族状态。
+- 0.400 是 `missing_retrieval_cap` 的严格下限，不是状态复用。
+- 论文 0.600 与 qwen 0.400 的差异归因于 agent 是否主动检索，不是数据集或 grader。
+
+## 5. 原始数据
+
+### 5.1 全部 run 清单（含无效）
 
 | run | family | W 空响应 | WO 空响应 | W 任务数 | WO 任务数 | 403 | 有效性 |
 |---|---|---:|---:|---:|---:|---|---|
@@ -215,7 +287,7 @@
 | 20261119_sm03_run4 | SM03_fact_correction | 0 | 0 | 7 | 7 | 否 | 有效 |
 | 20261119_sm03_run5 | SM03_fact_correction | 0 | 0 | 7 | 7 | 否 | 有效 |
 
-### 4.2 全部 family 级原始指标
+### 5.2 全部 family 级原始指标
 
 | run | var | n | baseline | eval | eval_pass | delta(eval-base) | write | recall | update | retention | pollution | mechanism | evolve | paired_delta | infra | W/WO 空响应 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -236,7 +308,7 @@
 | 20261119_sm03_run5 | W | 7 | 0.600 | 1.000 | 1.000 | 0.400 | 0.833 | 1.000 | 1.000 | 1.000 | 0.000 | 0.967 | 0.387 | 0.296 | 0 | 0/0 |
 | 20261119_sm03_run5 | WO | 7 | 0.600 | 0.704 | 0.000 | 0.104 | 0.333 | 0.000 | 0.500 | 1.000 | 0.000 | 0.567 | 0.059 | - | 0 | 0/0 |
 
-### 4.3 SM01 全部 episode 原始数据
+### 5.3 SM01 全部 episode 原始数据
 
 | run | var | task | bucket | stage | score | g | c | s | slot | pass | judge | mw | inj | used | aq | rule_q | wall_s | out_tok | chars | status |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -295,7 +367,7 @@
 | 20261119_sm01_run3 | WO | SM01_CONTROL_001 | control | control | 1.000 | 1.000 | 1.000 | 1.000 | - | True | 1.000 | 0 | 0 | False | 0.000 | 0.000 | 31.4 | 1184 | 411 | ok |
 | 20261119_sm01_run3 | WO | SM01_CONTROL_003 | control | control | 0.600 | 1.000 | 0.000 | 1.000 | - | False | 0.900 | 0 | 0 | False | 0.000 | 0.000 | 19.9 | 884 | 468 | ok |
 
-### 4.4 SM03 全部 episode 原始数据
+### 5.4 SM03 全部 episode 原始数据
 
 | run | var | task | bucket | stage | score | g | c | s | slot | pass | judge | mw | inj | used | aq | rule_q | wall_s | out_tok | chars | status |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -370,7 +442,7 @@
 | 20261119_sm03_run5 | WO | SM03_CONTROL_001 | control | control | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | True | 1.000 | 0 | 0 | False | 0.000 | 0.000 | 23.7 | 1087 | 536 | ok |
 | 20261119_sm03_run5 | WO | SM03_CONTROL_003 | control | control | 0.600 | 1.000 | 0.000 | 1.000 | 0.000 | False | 0.800 | 0 | 0 | False | 0.000 | 0.000 | 121.1 | 3351 | 639 | ok |
 
-### 4.5 无效 run 证据
+### 5.5 无效 run 证据
 
 | run | var | 空响应任务 | message_count | wall_s | 备注 |
 |---|---|---|---:|---:|---|
@@ -394,7 +466,7 @@
 | 20261119_sm03_run3 | WO | SM03_CONTROL_002 | 1 | 5.9 | 403 AccessDenied.Unpurchased |
 | 20261119_sm03_run3 | WO | SM03_CONTROL_001 | 1 | 6.0 | 403 AccessDenied.Unpurchased |
 
-### 4.6 慢 episode 清单（wall_time_s>200，全部完成）
+### 5.6 慢 episode 清单（wall_time_s>200，全部完成）
 
 | run | var | task | wall_s | 状态 |
 |---|---|---|---:|---|

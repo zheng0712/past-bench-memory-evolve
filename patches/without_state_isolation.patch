@@ -1,0 +1,142 @@
+diff --git a/src/past_bench/cli.py b/src/past_bench/cli.py
+index ddae543..69a5b69 100644
+--- a/src/past_bench/cli.py
++++ b/src/past_bench/cli.py
+@@ -2687,12 +2687,26 @@ def cmd_evolve(args: argparse.Namespace) -> None:
+                     state_root=state_root,
+                     episode=episode,
+                     history_anchors=history_anchors,
++                    force_fresh=not persistence_enabled,
+                 )
+                 persistence_backend.materialize_inputs(
+                     state_root=state_root,
+                     initial_home_fixture_dir=_resolve_episode_initial_home_fixture_dir(sequence, episode),
+                     preseed_artifacts_dir=_resolve_episode_preseed_dir(sequence, episode),
+                 )
++                # Experimental opt-in for the matched no-persistence arm:
++                # materialize an empty memory file before the pre-episode
++                # snapshot so the mechanism layer registers a memory injection
++                # without exposing any state produced by earlier episodes.
++                # Off by default; never affects the with arm.
++                if (
++                    args.agent.startswith("hermes")
++                    and not persistence_enabled
++                    and os.environ.get("PB_WO_EMPTY_MEMORY") == "1"
++                ):
++                    memory_dir = state_root / "memories"
++                    memory_dir.mkdir(parents=True, exist_ok=True)
++                    (memory_dir / "MEMORY.md").touch()
+             artifact_before = (
+                 persistence_backend.snapshot_before(state_root, include_contents=True)
+                 if persistence_backend is not None
+@@ -2848,6 +2862,7 @@ def cmd_evolve(args: argparse.Namespace) -> None:
+                     episode=episode,
+                     anchors_dir=anchors_dir,
+                     history_anchors=history_anchors,
++                    save=persistence_enabled,
+                 )
+ 
+             print(
+diff --git a/src/past_bench/runner/self_evolve.py b/src/past_bench/runner/self_evolve.py
+index c252667..58f34fd 100644
+--- a/src/past_bench/runner/self_evolve.py
++++ b/src/past_bench/runner/self_evolve.py
+@@ -46,6 +46,10 @@ def build_hermes_extra_body(
+     return {
+         "hermes": {
+             "persistence_enabled": persistence_enabled,
++            # Keep the memory subsystem active in both arms; the no-persistence
++            # arm differs by having its runtime state stripped, not by losing
++            # the tool surface.
++            "skip_memory": not (memory_enabled or user_profile_enabled),
+             "session_search_enabled": session_search_enabled,
+             "home_dir": str(home_dir),
+             "capture_artifacts_dir": str(artifacts_dir),
+@@ -360,13 +364,23 @@ class PersistenceBackend:
+         else:
+             dst_root.mkdir(parents=True, exist_ok=True)
+ 
+-    def prepare_history(self, *, state_root: Path, episode: Any, history_anchors: dict[str, Path]) -> None:
++    def prepare_history(
++        self,
++        *,
++        state_root: Path,
++        episode: Any,
++        history_anchors: dict[str, Path],
++        force_fresh: bool = False,
++    ) -> None:
++        # The matched no-persistence arm cannot inherit state produced by
++        # earlier episodes, so it always starts from a freshly materialized
++        # state root while keeping the same tool surface.
++        if force_fresh or episode.history_mode == "fresh":
++            self.reset_state(state_root)
++            return
+         if episode.history_mode == "continue":
+             state_root.mkdir(parents=True, exist_ok=True)
+             return
+-        if episode.history_mode == "fresh":
+-            self.reset_state(state_root)
+-            return
+         if episode.history_mode == "from_anchor":
+             anchor_root = history_anchors.get(episode.history_load_anchor)
+             if anchor_root is None:
+@@ -384,8 +398,11 @@ class PersistenceBackend:
+         episode: Any,
+         anchors_dir: Path,
+         history_anchors: dict[str, Path],
++        save: bool = True,
+     ) -> None:
+-        if not episode.history_save_anchor:
++        # The no-persistence arm discards episode state instead of freezing
++        # anchors for later episodes to load.
++        if not save or not episode.history_save_anchor:
+             return
+         anchor_root = anchors_dir / episode.history_save_anchor
+         anchors_dir.mkdir(parents=True, exist_ok=True)
+@@ -658,19 +675,13 @@ def resolve_episode_tool_config(
+ ) -> dict[str, bool]:
+     """Resolve Hermes persistence toolsets for one episode.
+ 
+-    `without_persistence` disables all persistence-facing toolsets.
+-    `with_persistence` constrains single-mechanism families to the expected toolset
+-    so score gains are easier to attribute.
++    The matched no-persistence ablation keeps the same tool surface as the
++    persistence arm and strips runtime state instead of removing tools. The
++    ``persistence_enabled`` flag is still accepted for call-site clarity; the
++    tool selection itself is identical in both arms and follows the family's
++    expected signal.
+     """
+ 
+-    if not persistence_enabled:
+-        return {
+-            "memory_enabled": False,
+-            "user_profile_enabled": False,
+-            "skills_enabled": False,
+-            "session_search_enabled": False,
+-        }
+-
+     if expected_signal == "skill":
+         return {
+             "memory_enabled": False,
+diff --git a/tests/test_self_evolve.py b/tests/test_self_evolve.py
+index dbc4d4b..d3b5967 100644
+--- a/tests/test_self_evolve.py
++++ b/tests/test_self_evolve.py
+@@ -136,11 +136,13 @@ def test_resolve_episode_tool_config_isolates_expected_mechanism():
+         "skills_enabled": False,
+         "session_search_enabled": True,
+     }
++    # Matched no-persistence ablation keeps the same tool surface as the
++    # persistence arm; only runtime state is stripped.
+     assert disabled == {
+-        "memory_enabled": False,
+-        "user_profile_enabled": False,
+-        "skills_enabled": False,
+-        "session_search_enabled": False,
++        "memory_enabled": True,
++        "user_profile_enabled": True,
++        "skills_enabled": True,
++        "session_search_enabled": True,
+     }
+ 
+ 
