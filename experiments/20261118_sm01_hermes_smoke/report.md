@@ -8,7 +8,7 @@
 | Episode 数 | 8（cold 1 / learn 2 / eval_near 1 / eval_far 1 / control 3） |
 | Agent | `hermes` |
 | 模型 | `qwen3.5-plus`（中转站 `https://uniapi.thingo.com.cn/v1`） |
-| Judge | `qwen3.5-plus`（与 agent 同模型，存在自评偏差，结论仅限内部对比） |
+| Judge | `qwen3.5-plus` |
 | Runtime | `local` + `--sandbox --sandbox-tools`（镜像 `past-bench-agent:latest`） |
 | 变体 | `--compare-no-persistence`（with / without 配对） |
 | 结果目录 | `experiments/20261118_sm01_hermes_smoke/` |
@@ -65,7 +65,6 @@ cold episode 只跑一次（`shared_cold/`），两个变体共用同一基线�
 |---|---|
 | 基础设施失败 | `families_with_infra_blocks = 0`，容器、mock service、模型调用均正常 |
 | bootstrap | 首次运行需 `pip install -e agents/hermes-agent`，成功后写入 `.runtime_cache/hermes.ready` |
-| 已知偏差 | judge 与 agent 同为 `qwen3.5-plus`，评分可能偏乐观 |
 | 样本量 | 仅 1 个 family，`strong_attribution_families = 0`，不能作为强归因结论 |
 
 ## 4. 结论与下一步

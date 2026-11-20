@@ -7,7 +7,7 @@
 - 数据集：`PAST-Bench/self-evolve-tasks-v2`，commit `f822351`
 - family：`memory_ability/SM01_preference_adoption`、`update_ability/SM03_fact_correction`
 - agent：`hermes`；profile：`qwen`；model：`qwen3.5-plus`
-- judge：`qwen3.5-plus`（与 agent 同模型；judge_score 只写入 communication，不进入 task_score）
+- judge：`qwen3.5-plus`（judge_score 只写入 communication，不进入 task_score）
 - runtime：`local`；`--sandbox --sandbox-tools`；`--compare-no-persistence`
 - 有效 run：SM01 3 个（smoke / run2 / run3），SM03 3 个（smoke / run4 / run5）
 

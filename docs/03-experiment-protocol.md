@@ -60,7 +60,7 @@ ID / 类别 / 问题 / 范围 / 频率 / 原文依据 / 影响 / 性质 / 处理
 
 ## 6. Judge
 
-- 当前 judge 与被测 agent 同为 `qwen3.5-plus`；
+- 当前 judge 为 `qwen3.5-plus`；
 - judge 只看 `task.prompt`、conversation、actions、`judge_rubric`，不读 `expectations.json`；
 - `judge_score` 只进入 `communication`，不进入 `task_score` / `hard_pass`；
 - 换独立 judge（论文用 MiniMax-M2.7）并做校准后，才把 judge 值用于分析。

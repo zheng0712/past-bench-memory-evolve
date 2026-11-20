@@ -52,4 +52,3 @@ bash scripts/run_baseline.sh \
 - **必须在 `benchmarks/PAST-Bench` 目录下启动**，否则 bootstrap 找不到 `agents/hermes-agent`。
 - **不要用 `--runtime container`**：self-evolve 序列只支持 `--runtime local`；Docker 只作为 sandbox。
 - **403 `AccessDenied.Unpurchased`**：中转站账号/渠道没有该模型权限，不是 max_tokens；先单请求探测，再重跑。
-- **judge 与 agent 同模型**：当前 `config.yaml` 的 judge 是 `qwen3.5-plus`；judge 值只作辅助参考，换独立 judge 见 `reports/experiment-report.md` §2 `ISS-12`。

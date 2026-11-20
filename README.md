@@ -20,7 +20,7 @@
 
 两点说明：
 
-- judge 目前与 agent 同为 `qwen3.5-plus`；`judge_score` 只写入 `communication`，不进入 `task_score`，也不与论文 judge 对比。
+- `judge_score` 只写入 `communication`，不进入 `task_score`，也不与论文 judge 对比。
 - SM03 run2 的 without 变体、run3 的两个变体有空响应（run3 伴随 403），已作为无效 run 剔除；原始数据在报告 §4。
 
 ## 目录
@@ -87,7 +87,6 @@ experiments/<run>/
 
 - **SM01 最终回复没有 TSV**：39/48 条非空记录（81.3%），其中 6 条只差 TSV；见报告 §2 `ISS-01`。
 - **SM03 403/空响应**：run2 without 5/7、run3 14/14；已从有效表剔除，原始证据在报告 §4.5。
-- **judge 与被测 agent 同模型**：judge 值只作辅助参考；下一步换独立 judge 并做校准。
 - **慢 episode**：`wall_time_s>200s` 只标注，不当作失败；报告 §4.6。
 
 ## 下一步

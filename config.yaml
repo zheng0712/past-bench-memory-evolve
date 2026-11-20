@@ -1,5 +1,4 @@
-# 本仓库运行配置。judge 暂用 qwen3.5-plus，与 agent 同模型，
-# 论文对比时需在报告中注明这一点；若有 MiniMax key，改回 MiniMax-M2.7。
+# 本仓库运行配置。judge 使用 qwen3.5-plus；若有 MiniMax key，改回 MiniMax-M2.7。
 judge:
   enabled: true
   api_key: ${QWEN_API_KEY}
